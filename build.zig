@@ -1,41 +1,34 @@
 const std = @import("std");
 const rlz = @import("raylib-zig");
-const rayraptor = @import("src/main.zig");
+const rayraptor = @import("src/lib.zig");
 
 pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
-    const rr_mod = b.addModule("rayraptor", .{
-        .root_source_file = b.path("src/main.zig"),
-        .target = target,
-        .optimize = optimize,
-    });
 
+    // Get raylib dependency
     const raylib_dep = b.dependency("raylib-zig", .{
         .target = target,
         .optimize = optimize,
     });
-
     const raylib = raylib_dep.module("raylib");
-
-    rr_mod.addImport("raylib", raylib);
-
-    // dev build setup (it's needed to link the raylib library for development)
     const raylib_artifact = raylib_dep.artifact("raylib");
 
-    const develop_step = b.step("develop", "Development setup");
-    const dummy_exe = b.addExecutable(.{
-        .name = "rayraptor_dev",
-        .root_source_file = b.path("src/dummy.zig"),
+    const rr_lib = b.addStaticLibrary(.{
+        .name = "rayraptor",
+        .root_source_file = b.path("src/lib.zig"),
         .target = target,
         .optimize = optimize,
     });
+    rr_lib.linkLibrary(raylib_artifact); // Merge raylib linkage
+    rr_lib.root_module.addImport("raylib", raylib);
+    b.installArtifact(rr_lib);
 
-    dummy_exe.root_module.addImport("rayraptor", rr_mod);
-    dummy_exe.root_module.addImport("raylib", raylib);
-    dummy_exe.linkLibrary(raylib_artifact);
-    develop_step.dependOn(&b.addInstallArtifact(dummy_exe, .{}).step);
-    // end of dev build setup
-
-    b.installArtifact(raylib_artifact);
+    // Expose rayraptor with raylib to consumers
+    _ = b.addModule("rayraptor", .{
+        .root_source_file = b.path("src/lib.zig"),
+        .imports = &.{
+            .{ .name = "raylib", .module = raylib },
+        },
+    });
 }
