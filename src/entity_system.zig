@@ -1,5 +1,6 @@
 const std = @import("std");
 const rl = @import("raylib");
+const lib = @import("lib.zig");
 
 pub const Entity = struct {
     uuid: [16]u8,
@@ -7,34 +8,30 @@ pub const Entity = struct {
     pos: rl.Vector2,
 };
 
-pub const EntityManager = struct {
-    allocator: std.mem.Allocator,
-    entities: std.AutoArrayHashMap([16]u8, Entity),
+var entity_store: ?std.AutoArrayHashMap([16]u8, Entity) = null;
 
-    pub fn init(allocator: std.mem.Allocator) EntityManager {
-        return EntityManager{
-            .allocator = allocator,
-            .entities = std.AutoArrayHashMap([16]u8, Entity).init(allocator),
-        };
-    }
+pub fn createEntity(name: []const u8, pos: rl.Vector2) !*Entity {
+    if (entity_store == null) entity_store = std.AutoArrayHashMap([16]u8, Entity).init(lib.allocator);
+    var em = entity_store.?;
+    const uuid = createUUID();
+    try em.put(uuid, .{
+        .uuid = uuid,
+        .name = name,
+        .pos = pos,
+    });
+    return &em.get(uuid).?;
+}
 
-    pub fn deinit(self: *EntityManager) void {
-        self.entities.deinit();
-    }
+fn createUUID() [16]u8 {
+    var uuid: [16]u8 = undefined;
+    std.crypto.random.bytes(&uuid);
+    uuid[6] = (uuid[6] & 0x0F) | 0x40; // Set version to 4 (random)
+    uuid[8] = (uuid[8] & 0x3F) | 0x80; // Set variant to RFC 4122
+    return uuid;
+}
 
-    pub fn create(self: *EntityManager, name: []const u8, pos: rl.Vector2) !*Entity {
-        // generate UUID
-        var uuid: [16]u8 = undefined;
-        std.crypto.random.bytes(&uuid);
-        uuid[6] = (uuid[6] & 0x0F) | 0x40; // Set version to 4 (random)
-        uuid[8] = (uuid[8] & 0x3F) | 0x80; // Set variant to RFC 4122
-        // create entity
-        var e = Entity{
-            .uuid = uuid,
-            .name = name,
-            .pos = pos,
-        };
-        try self.entities.put(uuid, e);
-        return &e;
+pub fn deinit() void {
+    if (entity_store) |em| {
+        em.deinit();
     }
-};
+}

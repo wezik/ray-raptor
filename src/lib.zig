@@ -22,21 +22,17 @@ pub const setActiveScene = scene.setActive;
 const runScene = scene.run;
 
 // Entities
-var entityManager: entities.EntityManager = undefined;
-pub fn getEntityManager() *entities.EntityManager {
-    return &entityManager;
-}
+pub const createEntity = entities.createEntity;
 
 pub fn init() !void {
     gpa = std.heap.GeneralPurposeAllocator(.{}){};
     allocator = gpa.allocator();
-    entityManager = entities.EntityManager.init(allocator);
 }
 
 fn deinit() !void {
     if (window_started) rl.closeWindow();
     try scene.deinit();
-    entityManager.deinit();
+    entities.deinit();
     _ = gpa.deinit();
 }
 
