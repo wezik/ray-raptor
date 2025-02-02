@@ -1,10 +1,12 @@
 const std = @import("std");
 const rl = raylib;
 const scene = @import("scene.zig");
+const entities = @import("entity_system.zig");
 
 // --- exposed components ---
 pub const raylib = @import("raylib");
 
+var gpa: std.heap.GeneralPurposeAllocator(.{}) = undefined;
 /// Allocator used for all allocations internally
 pub var allocator: std.mem.Allocator = undefined;
 
@@ -19,13 +21,23 @@ pub const registerScene = scene.registerScene;
 pub const setActiveScene = scene.setActive;
 const runScene = scene.run;
 
-pub fn init(_allocator: std.mem.Allocator) !void {
-    allocator = _allocator;
+// Entities
+var entityManager: entities.EntityManager = undefined;
+pub fn getEntityManager() *entities.EntityManager {
+    return &entityManager;
+}
+
+pub fn init() !void {
+    gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    allocator = gpa.allocator();
+    entityManager = entities.EntityManager.init(allocator);
 }
 
 fn deinit() !void {
     if (window_started) rl.closeWindow();
     try scene.deinit();
+    entityManager.deinit();
+    _ = gpa.deinit();
 }
 
 pub const StartConfig = struct {
