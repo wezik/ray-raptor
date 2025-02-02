@@ -6,6 +6,13 @@ pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
+    const rr_lib = b.addStaticLibrary(.{
+        .name = "rayraptor-lib",
+        .root_source_file = b.path("src/lib.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+
     // Get raylib dependency
     const raylib_dep = b.dependency("raylib-zig", .{
         .target = target,
@@ -13,22 +20,20 @@ pub fn build(b: *std.Build) !void {
     });
     const raylib = raylib_dep.module("raylib");
     const raylib_artifact = raylib_dep.artifact("raylib");
+    rr_lib.linkLibrary(raylib_artifact); // Merge raylib linkage
 
-    const rr_lib = b.addStaticLibrary(.{
-        .name = "rayraptor",
+    rr_lib.root_module.addAnonymousImport("raylib", .{
+        .root_source_file = raylib.root_source_file.?,
+        .target = target,
+        .optimize = optimize,
+    });
+
+    const rr_mod = b.addModule("rayraptor", .{
         .root_source_file = b.path("src/lib.zig"),
         .target = target,
         .optimize = optimize,
     });
-    rr_lib.linkLibrary(raylib_artifact); // Merge raylib linkage
-    rr_lib.root_module.addImport("raylib", raylib);
-    b.installArtifact(rr_lib);
+    rr_mod.addImport("raylib", raylib);
 
-    // Expose rayraptor with raylib to consumers
-    _ = b.addModule("rayraptor", .{
-        .root_source_file = b.path("src/lib.zig"),
-        .imports = &.{
-            .{ .name = "raylib", .module = raylib },
-        },
-    });
+    b.installArtifact(rr_lib);
 }
