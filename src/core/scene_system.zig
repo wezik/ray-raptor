@@ -49,22 +49,17 @@ pub const Scene = struct {
     init_step: ?*const fn (*Scene) anyerror!void = null,
     deinit_step: ?*const fn (*Scene) anyerror!void = null,
     update_step: ?*const fn (*Scene) anyerror!void = null,
+    ctx: ?*anyopaque = null,
 
     pub fn init(self: *Scene) !void {
-        if (self.init_step == null) return;
-        const _fn = self.init_step.?;
-        try _fn(self);
+        if (self.init_step) |_fn| try _fn(self);
     }
 
     pub fn deinit(self: *Scene) !void {
-        if (self.deinit_step == null) return;
-        const _fn = self.deinit_step.?;
-        try _fn(self);
+        if (self.deinit_step) |_fn| try _fn(self);
     }
 
     pub fn update(self: *Scene) !void {
-        if (self.update_step == null) return;
-        const _fn = self.update_step.?;
-        try _fn(self);
+        if (self.update_step) |_fn| try _fn(self);
     }
 };
