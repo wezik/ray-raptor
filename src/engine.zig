@@ -12,6 +12,7 @@ pub const RayRaptor = struct {
     exit_signal: bool = false,
 
     pub fn init(allocator: std.mem.Allocator) RayRaptor {
+        rl.initWindow(800, 600, "Ray Raptor Engine");
         return .{
             .scene_manager = s_sys.SceneManager.init(allocator),
         };
@@ -22,9 +23,6 @@ pub const RayRaptor = struct {
     }
 
     pub fn start(self: *RayRaptor) !void {
-        // init the window
-        rl.initWindow(800, 600, "Ray Raptor Engine");
-
         // run the game loop
         while (!self.exit_signal) {
             // calculate fixed cycles to run
