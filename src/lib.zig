@@ -5,6 +5,7 @@ const engine = @import("engine.zig");
 
 // --- exposed components ---
 pub const raylib = @import("raylib");
+pub const raygui = @import("raygui");
 
 pub const Vec2 = rl.Vector2;
 pub const Vec3 = rl.Vector3;
@@ -39,8 +40,8 @@ pub fn exit() void {
 }
 
 // Scenes
-pub const Scene = scene_system.Scene;
 pub const SceneManager = scene_system.SceneManager;
+pub const Scene = scene_system.Scene;
 pub const Scenes = struct {
     pub fn register(scene: Scene) !void {
         try e.scene_manager.register(scene);
@@ -50,8 +51,6 @@ pub const Scenes = struct {
         try e.scene_manager.queue(name);
     }
 };
-
-// Entities
 
 // Engine internals
 var e: engine.RayRaptor = undefined;

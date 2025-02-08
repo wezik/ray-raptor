@@ -19,11 +19,18 @@ pub fn build(b: *std.Build) !void {
         .optimize = optimize,
     });
     const raylib = raylib_dep.module("raylib");
+    const raygui = raylib_dep.module("raygui");
     const raylib_artifact = raylib_dep.artifact("raylib");
     rr_lib.linkLibrary(raylib_artifact); // Merge raylib linkage
 
     rr_lib.root_module.addAnonymousImport("raylib", .{
         .root_source_file = raylib.root_source_file.?,
+        .target = target,
+        .optimize = optimize,
+    });
+
+    rr_lib.root_module.addAnonymousImport("raygui", .{
+        .root_source_file = raygui.root_source_file.?,
         .target = target,
         .optimize = optimize,
     });
@@ -34,6 +41,7 @@ pub fn build(b: *std.Build) !void {
         .optimize = optimize,
     });
     rr_mod.addImport("raylib", raylib);
+    rr_mod.addImport("raygui", raygui);
 
     b.installArtifact(rr_lib);
 }
